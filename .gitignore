@@ -1,0 +1,3 @@
+bin/sphere-leds
+.gopath/*
+pkg/
