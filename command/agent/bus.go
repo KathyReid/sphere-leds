@@ -26,12 +26,7 @@ type Bus struct {
 	ticker *time.Ticker
 }
 
-type connectRequest struct {
-	Url   string `json:"url"`
-	Token string `json:"token"`
-}
-
-type disconnectRequest struct {
+type updateRequest struct {
 }
 
 type statusEvent struct {
@@ -81,25 +76,15 @@ func (b *Bus) listen() {
 
 }
 
-func (b *Bus) handleConnect(client *mqtt.MqttClient, msg mqtt.Message) {
-	log.Printf("[INFO] handleConnect")
-	req := &connectRequest{}
+func (b *Bus) handleUpdate(client *mqtt.MqttClient, msg mqtt.Message) {
+	log.Printf("[INFO] handleUpdate")
+	req := &updateRequest{}
 	err := b.decodeRequest(&msg, req)
 	if err != nil {
 		log.Printf("[ERR] Unable to decode connect request %s", err)
 	}
-	b.agent.startBridge(req)
+	b.agent.updateLeds(req)
 
-}
-
-func (b *Bus) handleDisconnect(client *mqtt.MqttClient, msg mqtt.Message) {
-	log.Printf("[INFO] handleDisconnect")
-	req := &disconnectRequest{}
-	err := b.decodeRequest(&msg, req)
-	if err != nil {
-		log.Printf("[ERR] Unable to decode disconnect request %s", err)
-	}
-	b.agent.stopBridge(req)
 }
 
 func (b *Bus) setupBackgroundJob() {

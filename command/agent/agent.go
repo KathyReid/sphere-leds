@@ -13,7 +13,7 @@ type Agent struct {
 }
 
 func createAgent(conf *Config) *Agent {
-	return &Agent{conf: conf, bridge: createBridge(conf), memstats: &runtime.MemStats{}}
+	return &Agent{conf: conf, memstats: &runtime.MemStats{}}
 }
 
 // TODO load the existing configuration on startup and start the bridge if needed
@@ -28,13 +28,8 @@ func (a *Agent) stop() error {
 	return nil
 }
 
-func (a *Agent) updateLeds(connect *connectRequest) {
-	a.bridge.start(connect.Url, connect.Token)
-}
+func (a *Agent) updateLeds(update *updateRequest) {
 
-// save the state of the bridge then disconnect it
-func (a *Agent) stopBridge(disconnect *disconnectRequest) {
-	a.bridge.stop()
 }
 
 func (a *Agent) getStatus() statsEvent {
