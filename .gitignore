@@ -1,5 +1,5 @@
 bin/sphere-leds
 .gopath/*
 pkg/
-.AppleDouble/*
+.AppleDouble
 sphere-leds
