@@ -136,8 +136,8 @@ func LedNameIndex(name string) int {
 
 func (l *LedArray) SetLEDs() {
 
-	log.Printf("Updateing leds: %v", l.Leds)
-	log.Printf("Updateing flashstate: %v", l.LedStates)
+	//	log.Printf("[DEBUG] Updating leds: %v", l.Leds)
+	//	log.Printf("[DEBUG] Updating flashstate: %v", l.LedStates)
 
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
