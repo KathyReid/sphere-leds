@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	updateTopic = "$sphere/leds/+"
-	stateTopic  = "$sphere/leds/state"
+	updateTopic = "$hardware/status/+"
 	statusTopic = "$sphere/leds/status"
 )
 
@@ -27,9 +26,9 @@ type Bus struct {
 }
 
 type updateRequest struct {
-	Action     string `json:"action"`
-	Brightness string `json:"brightness"`
-	On         int    `json:"on"`
+	Topic      string
+	Brightness int    `json:"brightness"`
+	On         bool   `json:"on"`
 	Color      string `json:"color"`
 	Flash      bool   `json:"flash"`
 }
@@ -73,10 +72,6 @@ func (b *Bus) listen() {
 		log.Fatalf("error starting subscription: %s", err)
 	}
 
-	ev := &statusEvent{Status: "started"}
-
-	b.client.PublishMessage(stateTopic, b.encodeRequest(ev))
-
 	b.setupBackgroundJob()
 
 }
@@ -88,6 +83,7 @@ func (b *Bus) handleUpdate(client *mqtt.MqttClient, msg mqtt.Message) {
 	if err != nil {
 		log.Printf("[ERR] Unable to decode connect request %s", err)
 	}
+	req.Topic = msg.Topic()
 	b.agent.updateLeds(req)
 
 }

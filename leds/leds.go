@@ -49,10 +49,29 @@ func (l *LedArray) setColorInt(position int, color []int) {
 	}
 }
 
+func (l *LedArray) SetPwmBrightness(brightness int) {
+	writetofile("/sys/class/backlight/pwm-backlight/brightness", fmt.Sprintf("%d", brightness))
+}
+
 func (l *LedArray) SetColor(position int, color string, flash bool) {
 	l.setColorInt(position, Colors[color])
 
 	// TODO FLASHY HERE
+}
+
+func (l *LedArray) Reset() {
+	for n := range LedNames {
+		l.SetColor(n, "black", false)
+	}
+	l.SetLEDs()
+}
+
+func ValidBrightness(brightness int) bool {
+	return brightness >= 0 && brightness <= 100
+}
+
+func ValidColor(color string) bool {
+	return Colors[color] != nil
 }
 
 func ValidLedName(name string) bool {

@@ -26,13 +26,11 @@ func (c *TesterCommand) Run(args []string) int {
 
 	var color string
 	var ledName string
-	var debug bool
 
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
-	cmdFlags.StringVar(&color, "color", "", "color to toggle all the leds to")
-	cmdFlags.StringVar(&ledName, "ledname", "", "name of the led to toggle")
-	cmdFlags.BoolVar(&debug, "debug", false, "enable debug")
+	cmdFlags.StringVar(&color, "color", "", "set the led to this color")
+	cmdFlags.StringVar(&ledName, "ledname", "", "name of the led to set")
 
 	if err := cmdFlags.Parse(args); err != nil {
 		return 1
@@ -74,8 +72,8 @@ Usage: sphere-leds tester [options]
 
 Options:
 
-  -color=                             Color to toggle all the leds to
-  -debug                              Enables debug output.
+  -color=red                          Set the led to this color.
+  -ledname=power                      Name of the led to set.
 `
 	return helpText
 }

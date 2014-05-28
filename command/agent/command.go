@@ -42,7 +42,6 @@ func (c *Command) readConfig() *Config {
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 	cmdFlags.StringVar(&cmdConfig.LocalUrl, "localurl", "tcp://localhost:1883", "cloud url to connect to")
-	cmdFlags.BoolVar(&cmdConfig.Debug, "debug", false, "enable debug")
 
 	if err := cmdFlags.Parse(c.args); err != nil {
 		return nil
@@ -110,7 +109,6 @@ Usage: sphere-leds agent [options]
 Options:
 
   -localurl=tcp://localhost:1883      URL for the local broker.
-  -debug                              Enables debug output.
 `
 	return helpText
 }
