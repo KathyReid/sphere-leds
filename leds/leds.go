@@ -1,14 +1,12 @@
 package leds
 
 import (
-	// "bufio"
-	"flag"
 	"fmt"
-	// "io/ioutil"
+	"log"
 	"os"
 )
 
-var colors = map[string][]int{
+var Colors = map[string][]int{
 	"black":   {0, 0, 0},
 	"red":     {1, 0, 0},
 	"green":   {0, 1, 0},
@@ -19,15 +17,15 @@ var colors = map[string][]int{
 	"white":   {1, 1, 1},
 }
 
-var led_types = map[string]int{
-	"power":          0,
-	"wired_internet": 1,
-	"wireless":       2,
-	"pairing":        3,
-	"radio":          4,
+var LedNames = []string{
+	"power",
+	"wired_internet",
+	"wireless",
+	"pairing",
+	"radio",
 }
 
-var led_positions = [][]int{
+var LedPositions = [][]int{
 	{15, 13, 14},
 	{12, 10, 11},
 	{9, 1, 8},
@@ -35,51 +33,49 @@ var led_positions = [][]int{
 	{5, 7, 6},
 }
 
-var leds = []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
-var p = fmt.Println
-
-func main() {
-	colorPtr := flag.String("color", "black", "give me a color mofo")
-	flag.Parse()
-	for i := 0; i < 5; i++ {
-		setColor(i, *colorPtr, false)
-	}
-	setLEDs()
+// holds the state for an array of leds on our board.
+type LedArray struct {
+	Leds []int
 }
 
-func SetStatus(ledtype string, color string, flash bool) {
-	if led_types[ledtype] == nil {
-		p("bad led type: " + ledtype)
-		//#TODO barf nicely?
-	}
-	if colors[color] == nil {
-		p("bad color name: " + color)
-		//#TODO barf nicely?
-	}
-
-	setColor(led_types[ledtype], colors[color], flash)
+func CreateLedArray() *LedArray {
+	return &LedArray{Leds: []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 }
 
-func _setColor(position int, color []int) {
-	var indexes = led_positions[position]
+func (l *LedArray) setColorInt(position int, color []int) {
+	var indexes = LedPositions[position]
 	for i := 0; i < 3; i++ {
-		leds[indexes[i]] = color[i]
+		l.Leds[indexes[i]] = color[i]
 	}
 }
 
-func setColor(position int, color string, flash bool) {
-	_setColor(position, colors[color])
-	//#TODO FLASHY HERE
+func (l *LedArray) SetColor(position int, color string, flash bool) {
+	l.setColorInt(position, Colors[color])
+
+	// TODO FLASHY HERE
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
+func ValidLedName(name string) bool {
+	for n := range LedNames {
+		if LedNames[n] == name {
+			return true
+		}
 	}
+	return false
 }
 
-func setLEDs() {
+func LedNameIndex(name string) int {
+	for n := range LedNames {
+		if LedNames[n] == name {
+			return n
+		}
+	}
+	panic("LedName didn't exist.")
+}
+
+func (l *LedArray) SetLEDs() {
+
+	log.Printf("Updateing leds: %v", l.Leds)
 
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
@@ -107,8 +103,8 @@ func setLEDs() {
 	writetofile("/sys/class/gpio/gpio40/direction", "low")
 	writetofile("/sys/class/gpio/gpio96/direction", "low")
 
-	for i := 0; i < len(leds); i++ {
-		writetofile("/sys/class/gpio/gpio40/value", fmt.Sprintf("%d", leds[i]))
+	for i := range l.Leds {
+		writetofile("/sys/class/gpio/gpio40/value", fmt.Sprintf("%d", l.Leds[i]))
 		writetofile("/sys/class/gpio/gpio96/value", "1")
 		writetofile("/sys/class/gpio/gpio96/value", "0")
 	}
@@ -118,17 +114,20 @@ func setLEDs() {
 }
 
 func writetofile(fn string, val string) error {
+
 	df, err := os.OpenFile(fn, os.O_WRONLY|os.O_SYNC, 0666)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = fmt.Fprintln(df, val)
 
 	if err != nil {
-		panic(err)
+		log.Printf("[ERROR] failed to open file %s - %s", fn, err)
+		return err
 	}
 
-	df.Close()
+	defer df.Close()
+
+	if _, err = fmt.Fprintln(df, val); err != nil {
+		log.Printf("[ERROR] failed write to %s - %s", fn, err)
+		return err
+	}
+
 	return nil
 }

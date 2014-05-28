@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	updateTopic = "$sphere/leds/update"
-	statusTopic = "$sphere/leds/status"
+	updateTopic = "$sphere/leds/+"
 	stateTopic  = "$sphere/leds/state"
+	statusTopic = "$sphere/leds/status"
 )
 
 /*
@@ -27,6 +27,11 @@ type Bus struct {
 }
 
 type updateRequest struct {
+	Action     string `json:"action"`
+	Brightness string `json:"brightness"`
+	On         int    `json:"on"`
+	Color      string `json:"color"`
+	Flash      bool   `json:"flash"`
 }
 
 type statusEvent struct {
@@ -95,7 +100,7 @@ func (b *Bus) setupBackgroundJob() {
 		case <-b.ticker.C:
 			// emit the status
 			status := b.agent.getStatus()
-			log.Printf("[DEBUG] status %+v", status)
+			// log.Printf("[DEBUG] status %+v", status)
 			b.client.PublishMessage(statusTopic, b.encodeRequest(status))
 		}
 	}

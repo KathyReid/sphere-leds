@@ -29,6 +29,11 @@ func init() {
 				Ui:      ui,
 			}, nil
 		},
+		"tester": func() (cli.Command, error) {
+			return &command.TesterCommand{
+				Ui: ui,
+			}, nil
+		},
 	}
 }
 
