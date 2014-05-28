@@ -2,8 +2,8 @@
 set -e
 
 OWNER=ninjablocks
-BIN_NAME=sphere-status-leds
-PROJECT_NAME=sphere-status-leds
+BIN_NAME=sphere-leds
+PROJECT_NAME=sphere-leds
 
 # Get the parent directory of where this script is.
 SOURCE="${BASH_SOURCE[0]}"

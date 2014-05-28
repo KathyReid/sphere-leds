@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PACKAGE_NAME=sphere-status-leds
+PACKAGE_NAME=sphere-leds
 
 # Get the parent directory of where this script is.
 SOURCE="${BASH_SOURCE[0]}"

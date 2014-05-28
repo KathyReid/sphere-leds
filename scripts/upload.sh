@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-REPO_NAME=sphere-status-leds
-PACKAGE_NAME=sphere-status-leds
+REPO_NAME=sphere-leds
+PACKAGE_NAME=sphere-leds
 BINTRAY_OWNER=ninjablocks
 
 # Get the parent directory of where this script is.
