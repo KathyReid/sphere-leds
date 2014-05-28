@@ -38,7 +38,9 @@ func (c *Config) IsDebug() bool {
 }
 
 func (c *Command) readConfig() *Config {
+
 	var cmdConfig Config
+
 	cmdFlags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	cmdFlags.Usage = func() { c.Ui.Output(c.Help()) }
 	cmdFlags.StringVar(&cmdConfig.LocalUrl, "localurl", "tcp://localhost:1883", "cloud url to connect to")

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 var Colors = map[string][]int{
@@ -35,11 +36,51 @@ var LedPositions = [][]int{
 
 // holds the state for an array of leds on our board.
 type LedArray struct {
-	Leds []int
+	Leds      []int
+	LedStates []LedState
+	ticker    *time.Ticker
+}
+
+type LedState struct {
+	Flash bool
+	Color string
+	On    bool
 }
 
 func CreateLedArray() *LedArray {
-	return &LedArray{Leds: []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
+	ledArr := &LedArray{
+		Leds:      []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		LedStates: make([]LedState, 5),
+	}
+	go ledArr.setupBackgroundJob()
+
+	return ledArr
+}
+
+func (l *LedArray) setupBackgroundJob() {
+	l.ticker = time.NewTicker(1 * time.Second)
+
+	for {
+		select {
+		case <-l.ticker.C:
+			// emit the status
+			//log.Println("[DEBUG] flash")
+			for n := range l.LedStates {
+				if l.LedStates[n].Flash {
+
+					if l.LedStates[n].On {
+						l.setColorInt(n, Colors["black"])
+						l.LedStates[n].On = false
+					} else {
+						l.setColorInt(n, Colors[l.LedStates[n].Color])
+						l.LedStates[n].On = true
+					}
+					l.SetLEDs()
+				}
+			}
+
+		}
+	}
 }
 
 func (l *LedArray) setColorInt(position int, color []int) {
@@ -54,9 +95,10 @@ func (l *LedArray) SetPwmBrightness(brightness int) {
 }
 
 func (l *LedArray) SetColor(position int, color string, flash bool) {
+	l.LedStates[position].Flash = flash
+	l.LedStates[position].Color = color
+	l.LedStates[position].On = true
 	l.setColorInt(position, Colors[color])
-
-	// TODO FLASHY HERE
 }
 
 func (l *LedArray) Reset() {
@@ -95,6 +137,7 @@ func LedNameIndex(name string) int {
 func (l *LedArray) SetLEDs() {
 
 	log.Printf("Updateing leds: %v", l.Leds)
+	log.Printf("Updateing flashstate: %v", l.LedStates)
 
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
