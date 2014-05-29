@@ -57,7 +57,6 @@ func (a *Agent) updateLeds(update *updateRequest) {
 
 	if leds.ValidLedName(action) && leds.ValidColor(update.Color) {
 		a.leds.SetColor(leds.LedNameIndex(action), update.Color, update.Flash)
-		a.leds.SetLEDs()
 	} else {
 		log.Printf("[WARN] bad SetColor params - %s %s %s", action, update.Color, update.Flash)
 	}
