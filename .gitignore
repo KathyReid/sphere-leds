@@ -3,3 +3,4 @@ bin/sphere-leds
 pkg/
 .AppleDouble
 sphere-leds
+.DS_Store
