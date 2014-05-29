@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -39,6 +40,7 @@ type LedArray struct {
 	Leds      []int
 	LedStates []LedState
 	ticker    *time.Ticker
+	lock      *sync.Mutex
 }
 
 type LedState struct {
@@ -51,6 +53,7 @@ func CreateLedArray() *LedArray {
 	ledArr := &LedArray{
 		Leds:      []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		LedStates: make([]LedState, 5),
+		lock:      &sync.Mutex{},
 	}
 	initLEDs()
 	go ledArr.setupBackgroundJob()
@@ -64,7 +67,9 @@ func (l *LedArray) setupBackgroundJob() {
 	for {
 		select {
 		case <-l.ticker.C:
-			// emit the status
+
+			l.lock.Lock()
+
 			//log.Println("[DEBUG] flash")
 			for n := range l.LedStates {
 				if l.LedStates[n].Flash {
@@ -76,9 +81,13 @@ func (l *LedArray) setupBackgroundJob() {
 						l.setColorInt(n, Colors[l.LedStates[n].Color])
 						l.LedStates[n].On = true
 					}
-					l.SetLEDs()
 				}
 			}
+			// we should use a cached copy of the array then do a diff and conditionally
+			// set leds.
+			l.SetLEDs()
+
+			l.lock.Unlock()
 
 		}
 	}
@@ -96,16 +105,23 @@ func (l *LedArray) SetPwmBrightness(brightness int) {
 }
 
 func (l *LedArray) SetColor(position int, color string, flash bool) {
+	defer l.lock.Unlock()
+	l.lock.Lock()
 	l.LedStates[position].Flash = flash
 	l.LedStates[position].Color = color
 	l.LedStates[position].On = true
 	l.setColorInt(position, Colors[color])
+	// apply it
+	l.SetLEDs()
 }
 
 func (l *LedArray) Reset() {
+	defer l.lock.Unlock()
+	l.lock.Lock()
 	for n := range LedNames {
 		l.SetColor(n, "black", false)
 	}
+	// apply it
 	l.SetLEDs()
 }
 
