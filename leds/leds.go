@@ -52,6 +52,7 @@ func CreateLedArray() *LedArray {
 		Leds:      []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		LedStates: make([]LedState, 5),
 	}
+	initLEDs()
 	go ledArr.setupBackgroundJob()
 
 	return ledArr
@@ -134,11 +135,8 @@ func LedNameIndex(name string) int {
 	panic("LedName didn't exist.")
 }
 
-func (l *LedArray) SetLEDs() {
-
-	//	log.Printf("[DEBUG] Updating leds: %v", l.Leds)
-	//	log.Printf("[DEBUG] Updating flashstate: %v", l.LedStates)
-
+func initLEDs() {
+	log.Printf("Initializing LEDs")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
 	writetofile("/sys/kernel/debug/omap_mux/uart0_ctsn", "27")
@@ -164,6 +162,12 @@ func (l *LedArray) SetLEDs() {
 	writetofile("/sys/class/gpio/gpio10/direction", "low")
 	writetofile("/sys/class/gpio/gpio40/direction", "low")
 	writetofile("/sys/class/gpio/gpio96/direction", "low")
+
+}
+
+func (l *LedArray) SetLEDs() {
+	//	log.Printf("[DEBUG] Updating leds: %v", l.Leds)
+	//	log.Printf("[DEBUG] Updating flashstate: %v", l.LedStates)
 
 	for i := range l.Leds {
 		writetofile("/sys/class/gpio/gpio40/value", fmt.Sprintf("%d", l.Leds[i]))
