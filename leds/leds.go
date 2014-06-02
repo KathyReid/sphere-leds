@@ -107,6 +107,7 @@ func (l *LedArray) SetPwmBrightness(brightness int) {
 func (l *LedArray) SetColor(position int, color string, flash bool) {
 	defer l.lock.Unlock()
 	l.lock.Lock()
+	// update the state
 	l.LedStates[position].Flash = flash
 	l.LedStates[position].Color = color
 	l.LedStates[position].On = true
@@ -118,8 +119,12 @@ func (l *LedArray) SetColor(position int, color string, flash bool) {
 func (l *LedArray) Reset() {
 	defer l.lock.Unlock()
 	l.lock.Lock()
-	for n := range LedNames {
-		l.SetColor(n, "black", false)
+	for pos := range LedNames {
+		// update the states
+		l.LedStates[pos].Flash = false
+		l.LedStates[pos].Color = "black"
+		l.LedStates[pos].On = true
+		l.SetColor(pos, "black", false)
 	}
 	// apply it
 	l.SetLEDs()
