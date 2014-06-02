@@ -124,7 +124,7 @@ func (l *LedArray) Reset() {
 		l.LedStates[pos].Flash = false
 		l.LedStates[pos].Color = "black"
 		l.LedStates[pos].On = true
-		l.SetColor(pos, "black", false)
+		l.setColorInt(pos, Colors["black"])
 	}
 	// apply it
 	l.SetLEDs()
