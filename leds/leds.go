@@ -37,10 +37,11 @@ var LedPositions = [][]int{
 
 // holds the state for an array of leds on our board.
 type LedArray struct {
-	Leds      []int
-	LedStates []LedState
-	ticker    *time.Ticker
-	lock      *sync.Mutex
+	Leds         []int
+	LedStates    []LedState
+	BlinkOnState bool
+	ticker       *time.Ticker
+	lock         *sync.Mutex
 }
 
 type LedState struct {
@@ -77,9 +78,11 @@ func (l *LedArray) setupBackgroundJob() {
 					if l.LedStates[n].On {
 						l.setColorInt(n, Colors["black"])
 						l.LedStates[n].On = false
+						l.BlinkOnState = false
 					} else {
 						l.setColorInt(n, Colors[l.LedStates[n].Color])
 						l.LedStates[n].On = true
+						l.BlinkOnState = true
 					}
 				}
 			}
@@ -110,7 +113,11 @@ func (l *LedArray) SetColor(position int, color string, flash bool) {
 	// update the state
 	l.LedStates[position].Flash = flash
 	l.LedStates[position].Color = color
-	l.LedStates[position].On = true
+	if flash {
+		l.LedStates[position].On = l.BlinkOnState
+	} else {
+		l.LedStates[position].On = true
+	}
 	l.setColorInt(position, Colors[color])
 	// apply it
 	l.SetLEDs()
