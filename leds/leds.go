@@ -104,7 +104,7 @@ func (l *LedArray) setColorInt(position int, color []int) {
 }
 
 func (l *LedArray) SetPwmBrightness(brightness int) {
-	writetofile("/sys/class/backlight/pwm-backlight/brightness", fmt.Sprintf("%d", brightness))
+	writetofile("/sys/class/pwm/ehrpwm.0:0/run/duty_percent", fmt.Sprintf("%d", brightness))
 }
 
 func (l *LedArray) SetColor(position int, color string, flash bool) {
@@ -165,6 +165,18 @@ func LedNameIndex(name string) int {
 
 func initLEDs() {
 	log.Printf("Initializing LEDs")
+
+	// underlight
+	writetofile("/sys/kernel/debug/omap_mux/spi0_sclk", "03")
+
+	// echo 0   > run stop
+	// echo 0   > duty_percent make it black
+	// echo 200 > period_freq oscilating frequency
+	// echo 1   > run run it
+	writetofile("/sys/class/pwm/ehrpwm.0:0/run", "0")
+	writetofile("/sys/class/pwm/ehrpwm.0:0/period_freq", "200")
+	writetofile("/sys/class/pwm/ehrpwm.0:0/run", "1")
+
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
 	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
 	writetofile("/sys/kernel/debug/omap_mux/uart0_ctsn", "27")
