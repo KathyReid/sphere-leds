@@ -3,7 +3,6 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -51,7 +50,7 @@ func createBus(conf *Config, agent *Agent) *Bus {
 }
 
 func (b *Bus) listen() {
-	log.Printf("[INFO] connecting to the bus")
+	logger.Infof("connecting to the bus")
 
 	opts := mqtt.NewClientOptions().SetBroker(b.conf.LocalUrl).SetClientId("mqtt-bridgeify")
 
@@ -64,7 +63,7 @@ func (b *Bus) listen() {
 	if err != nil {
 		log.Fatalf("error starting connection: %s", err)
 	} else {
-		fmt.Printf("Connected as %s\n", b.conf.LocalUrl)
+		logger.Infof("Connected as %s\n", b.conf.LocalUrl)
 	}
 
 	topicFilter, _ := mqtt.NewTopicFilter(updateTopic, 0)
@@ -77,11 +76,11 @@ func (b *Bus) listen() {
 }
 
 func (b *Bus) handleUpdate(client *mqtt.MqttClient, msg mqtt.Message) {
-	log.Printf("[INFO] handleUpdate")
+	logger.Debugf("handleUpdate")
 	req := &updateRequest{}
 	err := b.decodeRequest(&msg, req)
 	if err != nil {
-		log.Printf("[ERR] Unable to decode connect request %s", err)
+		logger.Errorf("Unable to decode connect request %s", err)
 	}
 	req.Topic = msg.Topic()
 	b.agent.updateLeds(req)

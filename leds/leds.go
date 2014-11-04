@@ -2,7 +2,6 @@ package leds
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
@@ -164,8 +163,6 @@ func LedNameIndex(name string) int {
 }
 
 func initLEDs() {
-	log.Printf("Initializing LEDs")
-
 	// underlight
 	writetofile("/sys/kernel/debug/omap_mux/spi0_sclk", "03")
 
@@ -224,14 +221,12 @@ func writetofile(fn string, val string) error {
 	df, err := os.OpenFile(fn, os.O_WRONLY|os.O_SYNC, 0666)
 
 	if err != nil {
-		log.Printf("[ERROR] failed to open file %s - %s", fn, err)
 		return err
 	}
 
 	defer df.Close()
 
 	if _, err = fmt.Fprintln(df, val); err != nil {
-		log.Printf("[ERROR] failed write to %s - %s", fn, err)
 		return err
 	}
 

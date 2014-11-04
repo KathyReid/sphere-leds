@@ -3,14 +3,16 @@ package agent
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/hashicorp/logutils"
 	"github.com/mitchellh/cli"
+	nlog "github.com/ninjasphere/go-ninja/logger"
 )
+
+var logger = nlog.GetLogger("sphere-leds")
 
 /*
  Holds all the context for a running agent
@@ -20,7 +22,6 @@ type Command struct {
 	ShutdownCh <-chan struct{}
 	args       []string
 	logFilter  *logutils.LevelFilter
-	logger     *log.Logger
 	agent      *Agent
 	bus        *Bus
 }

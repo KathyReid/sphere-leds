@@ -2,7 +2,6 @@ package agent
 
 import (
 	"errors"
-	"log"
 	"runtime"
 	"strings"
 
@@ -37,12 +36,12 @@ func (a *Agent) stop() error {
 
 func (a *Agent) updateLeds(update *updateRequest) {
 
-	log.Printf("update leds : %v", update)
+	logger.Debugf("update leds : %v", update)
 
 	err, action := getLastToken(update.Topic)
 
 	if err != nil {
-		log.Printf("[ERROR] bad update request - %s", err)
+		logger.Errorf("bad update request - %s", err)
 	}
 
 	if action == "reset" {
@@ -50,7 +49,7 @@ func (a *Agent) updateLeds(update *updateRequest) {
 		if leds.ValidBrightness(update.Brightness) {
 			a.leds.SetPwmBrightness(update.Brightness)
 		} else {
-			log.Printf("[WARN] bad brightness %d", update.Brightness)
+			logger.Warningf("bad brightness %d", update.Brightness)
 		}
 		return
 	}
@@ -58,7 +57,7 @@ func (a *Agent) updateLeds(update *updateRequest) {
 	if leds.ValidLedName(action) && leds.ValidColor(update.Color) {
 		a.leds.SetColor(leds.LedNameIndex(action), update.Color, update.Flash)
 	} else {
-		log.Printf("[WARN] bad SetColor params - %s %s %s", action, update.Color, update.Flash)
+		logger.Warningf("bad SetColor params - %s %s %s", action, update.Color, update.Flash)
 	}
 
 }
