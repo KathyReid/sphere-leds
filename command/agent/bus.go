@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	mqtt "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
@@ -107,5 +108,10 @@ func (b *Bus) encodeRequest(data interface{}) *mqtt.Message {
 }
 
 func (b *Bus) decodeRequest(msg *mqtt.Message, data interface{}) error {
-	return json.NewDecoder(bytes.NewBuffer(msg.Payload())).Decode(data)
+	payload := string(msg.Payload())
+	if strings.HasPrefix(payload, "[") && strings.HasSuffix(payload, "]") {
+		// go rpc can't handle enclosing parameters
+		payload = payload[1 : len(payload)-1]
+	}
+	return json.NewDecoder(bytes.NewBuffer([]byte(payload))).Decode(data)
 }
