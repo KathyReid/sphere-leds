@@ -34,6 +34,8 @@ var LedPositions = [][]int{
 	{5, 7, 6},
 }
 
+var is3_2 = false
+
 // holds the state for an array of leds on our board.
 type LedArray struct {
 	Leds         []int
@@ -103,7 +105,9 @@ func (l *LedArray) setColorInt(position int, color []int) {
 }
 
 func (l *LedArray) SetPwmBrightness(brightness int) {
-	writetofile("/sys/class/pwm/ehrpwm.0:0/run/duty_percent", fmt.Sprintf("%d", brightness))
+	if is3_2 {
+		writetofile("/sys/class/pwm/ehrpwm.0:0/run/duty_percent", fmt.Sprintf("%d", brightness))
+	}
 }
 
 func (l *LedArray) SetColor(position int, color string, flash bool) {
@@ -164,20 +168,26 @@ func LedNameIndex(name string) int {
 
 func initLEDs() {
 	// underlight
-	writetofile("/sys/kernel/debug/omap_mux/spi0_sclk", "03")
+	if is3_2 {
+		writetofile("/sys/kernel/debug/omap_mux/spi0_sclk", "03")
+	}
 
 	// echo 0   > run stop
 	// echo 0   > duty_percent make it black
 	// echo 200 > period_freq oscilating frequency
 	// echo 1   > run run it
-	writetofile("/sys/class/pwm/ehrpwm.0:0/run", "0")
-	writetofile("/sys/class/pwm/ehrpwm.0:0/period_freq", "200")
-	writetofile("/sys/class/pwm/ehrpwm.0:0/run", "1")
+	if is3_2 {
+		writetofile("/sys/class/pwm/ehrpwm.0:0/run", "0")
+		writetofile("/sys/class/pwm/ehrpwm.0:0/period_freq", "200")
+		writetofile("/sys/class/pwm/ehrpwm.0:0/run", "1")
+	}
 
-	writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
-	writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
-	writetofile("/sys/kernel/debug/omap_mux/uart0_ctsn", "27")
-	writetofile("/sys/kernel/debug/omap_mux/mii1_col", "27")
+	if is3_2 {
+		writetofile("/sys/kernel/debug/omap_mux/lcd_data15", "27")
+		writetofile("/sys/kernel/debug/omap_mux/lcd_data14", "27")
+		writetofile("/sys/kernel/debug/omap_mux/uart0_ctsn", "27")
+		writetofile("/sys/kernel/debug/omap_mux/mii1_col", "27")
+	}
 
 	if _, err := os.Stat("/sys/class/gpio/gpio11/direction"); os.IsNotExist(err) {
 		writetofile("/sys/class/gpio/export", "11")
