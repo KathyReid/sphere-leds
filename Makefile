@@ -13,3 +13,6 @@ test:
 	go test ./...
 
 .PHONY: all	dist clean test
+
+version-deps:
+	VERSION=$$(cat pkgversion) && sed -i "" "s/\"\(.*\)\"/\"$${VERSION}\"/" version.go
