@@ -1,0 +1,22 @@
+#!/bin/bash
+
+die() {
+	echo "$*" 1>&2
+	exit 1
+}
+
+underlight() {
+	local brightness=$1
+	echo "{\"brightness\":  $brightness}" | mosquitto_pub -t '$hardware/status/reset' -s
+}
+
+cmd=$1
+shift 1
+case "$cmd" in 
+underlight)
+	underlight "$@"
+;;
+*)
+	die "usage: sphere-leds-cli underlight {brightness}"
+;;
+esac
