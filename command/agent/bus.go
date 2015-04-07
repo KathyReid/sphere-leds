@@ -3,11 +3,9 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"github.com/ninjasphere/go-ninja/bus"
 	"strings"
 	"time"
-
-	mqtt "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 )
 
 const (
@@ -21,7 +19,7 @@ const (
 type Bus struct {
 	conf   *Config
 	agent  *Agent
-	client *mqtt.MqttClient
+	bus    bus.Bus
 	ticker *time.Ticker
 }
 
@@ -46,42 +44,37 @@ type statsEvent struct {
 }
 
 func createBus(conf *Config, agent *Agent) *Bus {
-
-	return &Bus{conf: conf, agent: agent}
+	var addr string
+	if strings.HasPrefix(conf.LocalUrl, "tcp://") {
+		addr = conf.LocalUrl[len("tcp://"):]
+	} else {
+		addr = conf.LocalUrl
+	}
+	logger.Infof("connecting to the bus %s...", addr)
+	theBus := bus.MustConnect(addr, "sphere-leds")
+	logger.Infof("connected to the bus.")
+	return &Bus{conf: conf, bus: theBus, agent: agent}
 }
 
 func (b *Bus) listen() {
-	logger.Infof("connecting to the bus")
-
-	opts := mqtt.NewClientOptions().AddBroker(b.conf.LocalUrl).SetClientId("mqtt-bridgeify")
-
-	// shut up
-	b.client = mqtt.NewClient(opts)
-
-	_, err := b.client.Start()
+	logger.Infof("subscribing to topic %s", updateTopic)
+	_, err := b.bus.Subscribe(updateTopic, b.handleUpdate)
 	if err != nil {
-		log.Fatalf("error starting connection: %s", err)
-	} else {
-		logger.Infof("Connected as %s\n", b.conf.LocalUrl)
-	}
-
-	topicFilter, _ := mqtt.NewTopicFilter(updateTopic, 0)
-	if _, err := b.client.StartSubscription(b.handleUpdate, topicFilter); err != nil {
-		log.Fatalf("error starting subscription: %s", err)
+		panic(err)
 	}
 
 	b.setupBackgroundJob()
 
 }
 
-func (b *Bus) handleUpdate(client *mqtt.MqttClient, msg mqtt.Message) {
-	logger.Debugf("handleUpdate")
+func (b *Bus) handleUpdate(topic string, payload []byte) {
+	logger.Debugf("handleUpdate %s", string(payload))
 	req := &updateRequest{}
-	err := b.decodeRequest(&msg, req)
+	err := b.decodeRequest(payload, req)
 	if err != nil {
 		logger.Errorf("Unable to decode connect request %s", err)
 	}
-	req.Topic = msg.Topic()
+	req.Topic = topic
 	b.agent.updateLeds(req)
 
 }
@@ -94,21 +87,21 @@ func (b *Bus) setupBackgroundJob() {
 		case <-b.ticker.C:
 			// emit the status
 			status := b.agent.getStatus()
-			// log.Printf("[DEBUG] status %+v", status)
-			b.client.PublishMessage(statusTopic, b.encodeRequest(status))
+			logger.Debugf("[DEBUG] status %+v", status)
+			b.bus.Publish(statusTopic, b.encodeRequest(status))
 		}
 	}
 
 }
 
-func (b *Bus) encodeRequest(data interface{}) *mqtt.Message {
+func (b *Bus) encodeRequest(data interface{}) []byte {
 	buf := bytes.NewBuffer(nil)
 	json.NewEncoder(buf).Encode(data)
-	return mqtt.NewMessage(buf.Bytes())
+	return buf.Bytes()
 }
 
-func (b *Bus) decodeRequest(msg *mqtt.Message, data interface{}) error {
-	payload := string(msg.Payload())
+func (b *Bus) decodeRequest(payloadBytes []byte, data interface{}) error {
+	payload := string(payloadBytes)
 	if strings.HasPrefix(payload, "[") && strings.HasSuffix(payload, "]") {
 		// go rpc can't handle enclosing parameters
 		payload = payload[1 : len(payload)-1]
