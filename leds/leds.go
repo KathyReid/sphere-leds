@@ -45,6 +45,7 @@ type LedArray struct {
 	BlinkOnState bool
 	ticker       *time.Ticker
 	lock         *sync.Mutex
+	flashDirty   bool // true if the background thread needs to check the flash state on next cycle, false otherwise
 }
 
 type LedState struct {
@@ -55,9 +56,10 @@ type LedState struct {
 
 func CreateLedArray() *LedArray {
 	ledArr := &LedArray{
-		Leds:      []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		LedStates: make([]LedState, 5),
-		lock:      &sync.Mutex{},
+		Leds:       []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		LedStates:  make([]LedState, 5),
+		lock:       &sync.Mutex{},
+		flashDirty: true,
 	}
 	initLEDs()
 	go ledArr.setupBackgroundJob()
@@ -67,7 +69,6 @@ func CreateLedArray() *LedArray {
 
 func (l *LedArray) setupBackgroundJob() {
 	l.ticker = time.NewTicker(1 * time.Second)
-
 	for {
 		select {
 		case <-l.ticker.C:
@@ -75,23 +76,30 @@ func (l *LedArray) setupBackgroundJob() {
 			l.lock.Lock()
 
 			//log.Println("[DEBUG] flash")
-			for n := range l.LedStates {
-				if l.LedStates[n].Flash {
+			if l.flashDirty {
 
-					if l.LedStates[n].On {
-						l.setColorInt(n, Colors["black"])
-						l.LedStates[n].On = false
-						l.BlinkOnState = false
-					} else {
-						l.setColorInt(n, Colors[l.LedStates[n].Color])
-						l.LedStates[n].On = true
-						l.BlinkOnState = true
+				flashCount := 0
+
+				for n := range l.LedStates {
+					if l.LedStates[n].Flash {
+						flashCount += 1
+
+						if l.LedStates[n].On {
+							l.setColorInt(n, Colors["black"])
+							l.LedStates[n].On = false
+							l.BlinkOnState = false
+						} else {
+							l.setColorInt(n, Colors[l.LedStates[n].Color])
+							l.LedStates[n].On = true
+							l.BlinkOnState = true
+						}
 					}
 				}
+
+				l.SetLEDs()
+
+				l.flashDirty = (flashCount > 0)
 			}
-			// we should use a cached copy of the array then do a diff and conditionally
-			// set leds.
-			l.SetLEDs()
 
 			l.lock.Unlock()
 
@@ -137,6 +145,9 @@ func (l *LedArray) SetColor(position int, color string, flash bool) {
 		l.LedStates[position].On = true
 	}
 	l.setColorInt(position, Colors[color])
+	if flash {
+		l.flashDirty = true
+	}
 	// apply it
 	l.SetLEDs()
 }
@@ -151,6 +162,7 @@ func (l *LedArray) Reset() {
 		l.LedStates[pos].On = true
 		l.setColorInt(pos, Colors["black"])
 	}
+	l.flashDirty = true
 	// apply it
 	l.SetLEDs()
 }
