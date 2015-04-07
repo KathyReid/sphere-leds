@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const pwmPeriod = 1000000
+
 var Colors = map[string][]int{
 	"black":   {0, 0, 0},
 	"red":     {1, 0, 0},
@@ -107,6 +109,19 @@ func (l *LedArray) setColorInt(position int, color []int) {
 func (l *LedArray) SetPwmBrightness(brightness int) {
 	if is3_2 {
 		writetofile("/sys/class/pwm/ehrpwm.0:0/run/duty_percent", fmt.Sprintf("%d", brightness))
+	} else {
+
+		var normalized int
+
+		if brightness < 0 {
+			normalized = 0
+		} else if normalized > brightness {
+			normalized = pwmPeriod
+		} else {
+			normalized = brightness * pwmPeriod / 100
+		}
+		writetofile("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", fmt.Sprintf("%d", normalized))
+		writetofile("/sys/class/pwm/pwmchip0/pwm0/enable", "1")
 	}
 }
 
@@ -180,6 +195,10 @@ func initLEDs() {
 		writetofile("/sys/class/pwm/ehrpwm.0:0/run", "0")
 		writetofile("/sys/class/pwm/ehrpwm.0:0/period_freq", "200")
 		writetofile("/sys/class/pwm/ehrpwm.0:0/run", "1")
+	} else {
+		writetofile("/sys/class/pwm/pwmchip0/export", "0")
+		writetofile("/sys/class/pwm/pwmchip0/pwm0/enable", "0")
+		writetofile("/sys/class/pwm/pwmchip0/pwm0/period", fmt.Sprintf("%d", pwmPeriod))
 	}
 
 	if is3_2 {
