@@ -49,4 +49,6 @@ var LedNames = []string{
 
 ````
 
+# Licensing
 
+sphere-leds is licensed under the MIT License. See LICENSE for the full license text.
